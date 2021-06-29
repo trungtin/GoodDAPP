@@ -6,11 +6,10 @@ import LoadingIcon from '../modal/LoadingIcon'
 import {
   useAPIConnection,
   useConnection,
+  useConnectionWeb3,
   useWeb3Polling,
 
   // useConnectionGun,
-
-  // useConnectionWeb3,
 } from '../../../lib/hooks/hasConnectionChange'
 import { useDialog } from '../../../lib/undux/utils/dialog'
 import logger from '../../../lib/logger/pino-logger'
@@ -23,8 +22,8 @@ const InternetConnection = props => {
   const isAPIConnection = useAPIConnection()
   useWeb3Polling()
 
-  // const isConnectionWeb3 = useConnectionWeb3()
   // const isConnectionGun = useConnectionGun()
+  useConnectionWeb3()
   const [showDisconnect, setShowDisconnect] = useState(false)
   const [firstLoadError, setFirstLoadError] = useState(true)
 

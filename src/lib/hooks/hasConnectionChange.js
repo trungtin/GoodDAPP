@@ -88,18 +88,21 @@ export const useConnectionWeb3 = () => {
       connection[callMethod]('error', web3Error)
     }
 
-    const onReady = () => {
-      bindEvents('remove')
-      bindEvents('add')
-      isWeb3Connection()
-    }
-    const onErrorClose = () => {
-      isWeb3Connection()
-    }
+    // const onReady = () => {
+    //   bindEvents('remove')
+    //   bindEvents('add')
+    //   isWeb3Connection()
+    // }
+    // const onErrorClose = () => {
+    //   isWeb3Connection()
+    // }
     const subscribe = method => {
-      wallet.wallet.currentProvider[method]('ready', onReady)
-      wallet.wallet.currentProvider[method]('error', onErrorClose)
-      wallet.wallet.currentProvider[method]('close', onErrorClose)
+      log.debug('CURRENT PROVIDER', wallet.wallet.currentProvider)
+      log.debug('METHOD', method)
+
+      // wallet.wallet.currentProvider[method]('ready', onReady)
+      // wallet.wallet.currentProvider[method]('error', onErrorClose)
+      // wallet.wallet.currentProvider[method]('close', onErrorClose)
     }
     if (wallet && appState === 'active') {
       log.debug('subscribing', wallet, appState, isWeb3Connection)

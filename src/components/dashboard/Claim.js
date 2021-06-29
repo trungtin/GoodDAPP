@@ -324,6 +324,8 @@ const Claim = props => {
     //only each 10 secs
     if (nextClaimTime <= 0) {
       gatherStats()
+      const res = wrappedGoodWallet.getNextClaimTime()
+      log.debug('NEXT CLAIM TIME', res)
     }
     let countDown = numeral(nextClaimTime).format('00:00:00')
     countDown = countDown.length === 7 ? '0' + countDown : countDown //numeral will format with only 1 leading 0
