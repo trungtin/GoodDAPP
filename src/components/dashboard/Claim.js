@@ -314,7 +314,7 @@ const Claim = props => {
     return () => timerInterval.current && clearInterval(timerInterval.current)
   }, [nextClaimDate])
 
-  const updateTimer = useCallback(() => {
+  const updateTimer = useCallback(async () => {
     if (!nextClaimDate) {
       return
     }
@@ -324,7 +324,7 @@ const Claim = props => {
     //only each 10 secs
     if (nextClaimTime <= 0) {
       gatherStats()
-      const res = wrappedGoodWallet.getNextClaimTime()
+      const res = await wrappedGoodWallet.getNextClaimTime()
       log.debug('NEXT CLAIM TIME', res)
     }
     let countDown = numeral(nextClaimTime).format('00:00:00')
