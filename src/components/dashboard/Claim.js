@@ -320,12 +320,15 @@ const Claim = props => {
     }
     let nextClaimTime = moment(nextClaimDate).diff(Date.now(), 'seconds')
 
+    log.debug('nextClaimDate', { nextClaimDate, dailyUbi })
+    log.debug('nextClaimTime', nextClaimTime)
+
     //trigger getting stats if reached time to claim, to make sure everything is update since we refresh
     //only each 10 secs
     if (nextClaimTime <= 0) {
       gatherStats()
       const res = await wrappedGoodWallet.getNextClaimTime()
-      log.debug('NEXT CLAIM TIME', res)
+      log.debug('NEXT CLAIM TIME', { res, dailyUbi })
     }
     let countDown = numeral(nextClaimTime).format('00:00:00')
     countDown = countDown.length === 7 ? '0' + countDown : countDown //numeral will format with only 1 leading 0
@@ -358,6 +361,7 @@ const Claim = props => {
         availableDistribution,
         totalFundsStaked,
         interestCollected,
+        dailyUbi,
       })
 
       setDailyUbi(entitlement)
