@@ -284,57 +284,6 @@ const Claim = props => {
     }
   }
 
-  const init = async () => {
-    // hack to make unit test pass, activity indicator in claim button causing
-    if (Config.nodeEnv !== 'test') {
-      setLoading(true)
-    }
-    await evaluateFRValidity()
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    init()
-  }, [])
-
-  useEffect(() => {
-    //stop polling blockchain when in background
-    if (appState !== 'active') {
-      return
-    }
-
-    gatherStats(true) //refresh all stats when returning back to app or dailyUbi changed meaning a new cycle started
-    claimInterval.current = setInterval(gatherStats, 10000) //constantly update stats but only for some data
-    return () => claimInterval.current && clearInterval(claimInterval.current)
-  }, [appState, dailyUbi])
-
-  useEffect(() => {
-    updateTimer()
-    timerInterval.current = setInterval(updateTimer, 1000)
-    return () => timerInterval.current && clearInterval(timerInterval.current)
-  }, [nextClaimDate])
-
-  const updateTimer = useCallback(async () => {
-    if (!nextClaimDate) {
-      return
-    }
-    let nextClaimTime = moment(nextClaimDate).diff(Date.now(), 'seconds')
-
-    log.debug('nextClaimDate', { nextClaimDate, dailyUbi })
-    log.debug('nextClaimTime', nextClaimTime)
-
-    //trigger getting stats if reached time to claim, to make sure everything is update since we refresh
-    //only each 10 secs
-    if (nextClaimTime <= 0) {
-      gatherStats()
-      const res = await wrappedGoodWallet.getNextClaimTime()
-      log.debug('NEXT CLAIM TIME', { res, dailyUbi })
-    }
-    let countDown = numeral(nextClaimTime).format('00:00:00')
-    countDown = countDown.length === 7 ? '0' + countDown : countDown //numeral will format with only 1 leading 0
-    setNextClaim(countDown)
-  }, [nextClaimDate])
-
   const gatherStats = async (all = false) => {
     try {
       const [
@@ -393,6 +342,57 @@ const Claim = props => {
       })
     }
   }
+
+  const init = async () => {
+    // hack to make unit test pass, activity indicator in claim button causing
+    if (Config.nodeEnv !== 'test') {
+      setLoading(true)
+    }
+    await evaluateFRValidity()
+    setLoading(false)
+  }
+
+  const updateTimer = useCallback(async () => {
+    if (!nextClaimDate) {
+      return
+    }
+    let nextClaimTime = moment(nextClaimDate).diff(Date.now(), 'seconds')
+
+    log.debug('nextClaimDate', { nextClaimDate, dailyUbi })
+    log.debug('nextClaimTime', nextClaimTime)
+
+    //trigger getting stats if reached time to claim, to make sure everything is update since we refresh
+    //only each 10 secs
+    if (nextClaimTime <= 0) {
+      gatherStats()
+      const res = await wrappedGoodWallet.getNextClaimTime()
+      log.debug('NEXT CLAIM TIME', { res, dailyUbi })
+    }
+    let countDown = numeral(nextClaimTime).format('00:00:00')
+    countDown = countDown.length === 7 ? '0' + countDown : countDown //numeral will format with only 1 leading 0
+    setNextClaim(countDown)
+  }, [nextClaimDate, gatherStats])
+
+  useEffect(() => {
+    init()
+  }, [])
+
+  useEffect(() => {
+    //stop polling blockchain when in background
+    if (appState !== 'active') {
+      return
+    }
+
+    gatherStats(true) //refresh all stats when returning back to app or dailyUbi changed meaning a new cycle started
+    claimInterval.current = setInterval(gatherStats, 10000) //constantly update stats but only for some data
+    return () => claimInterval.current && clearInterval(claimInterval.current)
+  }, [appState, dailyUbi, gatherStats])
+
+  useEffect(() => {
+    updateTimer()
+    timerInterval.current = setInterval(updateTimer, 1000)
+    return () => timerInterval.current && clearInterval(timerInterval.current)
+  }, [nextClaimDate, updateTimer])
 
   const handleClaim = async () => {
     setLoading(true)
