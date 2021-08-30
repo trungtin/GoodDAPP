@@ -213,6 +213,14 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+
+     packagingOptions {
+        pickFirst "lib/armeabi-v7a/libc++_shared.so"
+        pickFirst "lib/arm64-v8a/libc++_shared.so"
+        pickFirst "lib/x86/libc++_shared.so"
+        pickFirst "lib/x86_64/libc++_shared.so"
+    }
+
     // applicationVariants are e.g. debug, release
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
@@ -227,10 +235,12 @@ android {
 
         }
     }
-    packagingOptions {
-        // Make sure libjsc.so does not packed in APK
-        exclude "**/libjsc.so"
-    }
+    // packagingOptions {
+    //     // Make sure libjsc.so does not packed in APK
+    //     exclude "**/libjsc.so"
+    //     exclude "**/libhermes*.so"
+
+    // }
 
     dexOptions {
         javaMaxHeapSize "4G"
@@ -248,7 +258,7 @@ dependencies {
 
 
     // Add v8-android - prebuilt libv8android.so into APK
-    implementation 'org.chromium:v8-android:+'
+    // implementation 'org.chromium:v8-android:+'
     implementation "androidx.annotation:annotation:1.1.0"
     androidTestImplementation('com.wix:detox:+') { transitive = true }
     androidTestImplementation 'junit:junit:4.12'
