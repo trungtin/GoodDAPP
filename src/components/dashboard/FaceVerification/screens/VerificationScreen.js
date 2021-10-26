@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 
 import { identity } from 'lodash'
 import Instructions from '../components/Instructions'
@@ -8,6 +8,7 @@ import { useCurriedSetters } from '../../../../lib/undux/GDStore'
 import goodWallet from '../../../../lib/wallet/GoodWallet'
 import logger from '../../../../lib/logger/js-logger'
 
+import useDeviceOrientation from '../../../../lib/hooks/useDeviceOrientation'
 import useFaceTecSDK from '../hooks/useFaceTecSDK'
 import useFaceTecVerification from '../hooks/useFaceTecVerification'
 import useVerificationAttempts from '../hooks/useVerificationAttempts'
@@ -30,6 +31,7 @@ const log = logger.child({ from: 'FaceVerification' })
 const FaceVerification = ({ screenProps }) => {
   const [setIsCitizen] = useCurriedSetters(['isLoggedInCitizen'])
   const { attemptsCount, trackAttempt, resetAttempts } = useVerificationAttempts()
+  const orientation = useDeviceOrientation()
 
   // Redirects to the error screen, passing exception
   // object and allowing to show/hide retry button (hides it by default)
@@ -40,6 +42,15 @@ const FaceVerification = ({ screenProps }) => {
     },
     [screenProps],
   )
+
+  //Show orientationError if device changes to landscape while camera is on
+  useEffect(() => {
+    if (orientation === 'landscape') {
+      const exception = new Error('DeviceOrientationError')
+      exception.name = 'DeviceOrientationError'
+      exceptionHandler(exception)
+    }
+  }, [orientation])
 
   const uiReadyHandler = useCallback(() => {
     // firing event
