@@ -277,7 +277,15 @@ const Claim = props => {
           mainnetData,
         })
 
-        const { nextClaim, entitlement, activeClaimers, claimers, claimAmount, distribution } = fuseData
+        const {
+          nextClaim,
+          entitlement,
+          segmentedEntitlement,
+          activeClaimers,
+          claimers,
+          claimAmount,
+          distribution,
+        } = fuseData
         setDailyUbi(entitlement)
         setClaimCycleTime(moment(nextClaim).format('HH:mm:ss'))
 
@@ -339,7 +347,7 @@ const Claim = props => {
       }
 
       //when we come back from FR entitlement might not be set yet
-      const curEntitlement = dailyUbi || (await goodWallet.checkEntitlement().then(parseInt))
+      const curEntitlement = dailyUbi || (await goodWallet.checkEntitlement().then(_ => _.ubiAmount))
 
       if (!curEntitlement) {
         return

@@ -548,7 +548,13 @@ export class GoodWallet {
    */
   claim(callbacks: PromiEvents): Promise<TransactionReceipt> {
     try {
-      return this.sendTransaction(this.UBIContract.methods.claim(), callbacks)
+      const segmentedCalls = this.memberPools.map(addr => {
+        const c = new this.wallet.eth.Contract(SegmentedUBIABI, addr)
+        return this.sendTransaction(c.methods.claim(), callbacks)
+      })
+
+      const ubiCall = this.sendTransaction(this.UBIContract.methods.claim(), callbacks)
+      return Promise.all([...segmentedCalls, ubiCall])
     } catch (e) {
       log.error('claim failed', e.message, e, { category: ExceptionCategory.Blockhain })
 
@@ -556,17 +562,38 @@ export class GoodWallet {
     }
   }
 
-  checkEntitlement(): Promise<number> {
+  async checkSegmentedEntitlement(): Promise<number> {
     try {
-      return this.UBIContract.methods
-        .checkEntitlement()
-        .call()
-        .then(parseInt)
+      this.memberPools = await this.SegmentedIdentityContract.methods.memberToPools(this.account).call()
+      const calls = this.memberPools.map(addr => {
+        const c = new this.wallet.eth.Contract(SegmentedUBIABI, addr)
+        return { entitlement: c.methods.checkEntitlement() }
+      })
+      const results = await this.multicallFuse.all([calls])
+      return results.map(parseInt).reduce((p, c) => p + c, 0)
+    } catch (e) {
+      const { message } = e
+
+      log.error('checkSegmentedEntitlement failed', message, e)
+      return 0
+    }
+  }
+
+  async checkEntitlement(): Promise<{ ubiAmount: Number, segmentedAmount: number }> {
+    try {
+      const [ubiAmount, segmentedAmount] = await Promise.all([
+        this.UBIContract.methods
+          .checkEntitlement()
+          .call()
+          .then(parseInt),
+        this.checkSegmentedEntitlement(),
+      ])
+      return { ubiAmount, segmentedAmount }
     } catch (exception) {
       const { message } = exception
 
       log.error('checkEntitlement failed', message, exception)
-      return 0
+      return { ubiAmount: 0, segmentedAmount: 0 }
     }
   }
 
@@ -585,10 +612,14 @@ export class GoodWallet {
     ]
 
     //entitelment is separate because it depends on msg.sender
-    const [[[res]], entitlement] = await Promise.all([this.multicallFuse.all([calls]), this.checkEntitlement()])
+    const [[[res]], { ubiAmount: entitlement, segmentedAmount }] = await Promise.all([
+      this.multicallFuse.all([calls]),
+      this.checkEntitlement(),
+    ])
     res.entitlement = entitlement
     res.claimers = res.dailyStats[0]
     res.claimAmount = res.dailyStats[1]
+    res.segmentedEntitlement = segmentedAmount
     delete res.dailyStats
 
     const result = mapValues(res, parseInt)
